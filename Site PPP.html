@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Образовательный сайт</title>
+<style>
+  body { font-family: Arial, sans-serif; max-width: 600px; margin: 20px auto; }
+  h1 { text-align: center; }
+  .hidden { display: none; }
+  .question { margin-bottom: 15px; }
+  button { padding: 8px 16px; margin-top: 10px; }
+</style>
+</head>
+<body>
+
+<h1>Образовательная платформа</h1>
+
+<div id="subject-selection">
+  <h2>Выберите предмет</h2>
+  <button onclick="startTest('math')">Математика</button>
+  <button onclick="startTest('physics')">Физика</button>
+</div>
+
+<div id="test-container" class="hidden">
+  <h2 id="test-subject-title"></h2>
+  <div id="question-container"></div>
+  <button id="next-btn" onclick="nextQuestion()">Следующий вопрос</button>
+</div>
+
+<div id="result-container" class="hidden">
+  <h2>Результаты теста</h2>
+  <p id="result-text"></p>
+  <div id="course-recommendation"></div>
+  <button onclick="restart()">Пройти тест заново</button>
+</div>
+
+<script>
+  const tests = {
+    math: [
+      {question: "Сколько будет 2 + 2?", options: ["3", "4", "5"], answer: 1},
+      {question: "Чему равен квадратный корень из 16?", options: ["2", "4", "8"], answer: 1},
+      {question: "Чему равно значение π (приблизительно)?", options: ["3.14", "2.71", "1.62"], answer: 0},
+    ],
+    physics: [
+      {question: "Какой закон описывает движение тел?", options: ["Закон Ома", "Законы Ньютона", "Закон Архимеда"], answer: 1},
+      {question: "Единица измерения силы?", options: ["Ньютон", "Ватт", "Джоуль"], answer: 0},
+      {question: "Скорость света приблизительно равна?", options: ["300 000 км/с", "150 000 км/с", "3 000 км/с"], answer: 0},
+    ]
+  };
+
+  const courses = {
+    math: [
+      {level: "Начальный", description: "Основы арифметики и алгебры"},
+      {level: "Средний", description: "Углубленная алгебра и геометрия"},
+      {level: "Продвинутый", description: "Математический анализ и теория вероятностей"}
+    ],
+    physics: [
+      {level: "Начальный", description: "Основы механики и термодинамики"},
+      {level: "Средний", description: "Электричество и магнетизм"},
+      {level: "Продвинутый", description: "Квантовая физика и теория относительности"}
+    ]
+  };
+
+  let currentSubject = null;
+  let currentTest = [];
+  let currentQuestionIndex = 0;
+  let correctAnswers = 0;
+
+  const subjectSelection = document.getElementById('subject-selection');
+
+  const testContainer = document.getElementById('test-container');
+  const questionContainer = document.getElementById('question-container');
+  const testSubjectTitle = document.getElementById('test-subject-title');
+  const nextBtn = document.getElementById('next-btn');
+  const resultContainer = document.getElementById('result-container');
+  const resultText = document.getElementById('result-text');
+  const courseRecommendation = document.getElementById('course-recommendation');
+
+  function startTest(subject) {
+    currentSubject = subject;
+    currentTest = tests[subject];
+    currentQuestionIndex = 0;
+    correctAnswers = 0;
+
+    subjectSelection.classList.add('hidden');
+    testContainer.classList.remove('hidden');
+    resultContainer.classList.add('hidden');
+
+    testSubjectTitle.textContent = subject === 'math' ? 'Тест по математике' : 'Тест по физике';
+    showQuestion();
+  }
+
+  function showQuestion() {
+    const q = currentTest[currentQuestionIndex];
+    questionContainer.innerHTML = `
+      <div class="question"><strong>Вопрос ${currentQuestionIndex + 1}:</strong> ${q.question}</div>
+      ${q.options.map((opt, i) => `
+        <div>
+          <input type="radio" name="answer" id="opt${i}" value="${i}">
+          <label for="opt${i}">${opt}</label>
+        </div>
+      `).join('')}
+    `;
+    nextBtn.disabled = true;
+
+    // Добавляем обработчик выбора ответа
+    const inputs = questionContainer.querySelectorAll('input[name="answer"]');
+    inputs.forEach(input => {
+      input.addEventListener('change', () => {
+        nextBtn.disabled = false;
+      });
+    });
+  }
+
+  function nextQuestion() {
+    const selected = questionContainer.querySelector('input[name="answer"]:checked');
+    if (!selected) return;
+
+    const answer = parseInt(selected.value);
+    if (answer === currentTest[currentQuestionIndex].answer) {
+      correctAnswers++;
+    }
+
+    currentQuestionIndex++;
+
+    if (currentQuestionIndex < currentTest.length) {
+      showQuestion();
+    } else {
+      showResult();
+    }
+  }
+
+  function showResult() {
+    testContainer.classList.add('hidden');
+    resultContainer.classList.remove('hidden');
+
+    resultText.textContent = `Вы ответили правильно на ${correctAnswers} из ${currentTest.length} вопросов.`;
+
+    // Подбор курса в зависимости от результата
+    let levelIndex;
+    const ratio = correctAnswers / currentTest.length;
+    if (ratio < 0.4) levelIndex = 0;
+    else if (ratio < 0.75) levelIndex = 1;
+    else levelIndex = 2;
+
+    const course = courses[currentSubject][levelIndex];
+    courseRecommendation.innerHTML = `
+      <h3>Рекомендуемый курс: ${course.level}</h3>
+      <p>${course.description}</p>
+    `;
+  }
+
+  function restart() {
+    resultContainer.classList.add('hidden');
+    subjectSelection.classList.remove('hidden');
+  }
+</script>
+
+</body>
+</html>
